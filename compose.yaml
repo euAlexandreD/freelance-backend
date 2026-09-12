@@ -36,7 +36,8 @@ services:
             - 'sail-pgsql:/var/lib/postgresql'
             - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
         networks:
-            - sail
+            sail:
+                ipv4_address: 172.28.0.2
         healthcheck:
             test:
                 - CMD
@@ -51,6 +52,9 @@ services:
 networks:
     sail:
         driver: bridge
+        ipam:
+            config:
+                - subnet: 172.28.0.0/24
 volumes:
     sail-pgsql:
         driver: local
