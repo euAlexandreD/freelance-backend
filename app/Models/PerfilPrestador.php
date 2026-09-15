@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'bio'])]
+#[Fillable(['user_id', 'bio', 'titulo', 'link_externo'])]
 class PerfilPrestador extends Model
 {
     protected $table = 'perfil_prestadores';
