@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -22,17 +23,40 @@ class ProfileController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'tipo' => ['required', Rule::in(['cliente', 'prestador'])],
             'bio' => ['nullable', 'string'],
+            'titulo' => ['nullable', 'string', 'max:255'],
+            'link_externo' => ['nullable', 'url', 'max:255'],
+            'cidade' => ['nullable', 'string', 'max:255'],
+            'uf' => ['nullable', 'string', 'size:2'],
+            'telefone' => ['nullable', 'string', 'max:20'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        $user->update([
+        $userData = [
             'name' => $data['name'],
             'email' => $data['email'],
-        ]);
+            'cidade' => $data['cidade'] ?? null,
+            'uf' => $data['uf'] ?? null,
+            'telefone' => $data['telefone'] ?? null,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $userData['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $user->update($userData);
 
         if ($data['tipo'] === 'prestador') {
             $user->perfilPrestador()->updateOrCreate(
                 ['user_id' => $user->id],
-                ['bio' => $data['bio'] ?? null],
+                [
+                    'bio' => $data['bio'] ?? null,
+                    'titulo' => $data['titulo'] ?? null,
+                    'link_externo' => $data['link_externo'] ?? null,
+                ],
             );
         } else {
             $user->perfilCliente()->firstOrCreate(['user_id' => $user->id]);
