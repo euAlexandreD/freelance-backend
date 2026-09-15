@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoriaServicoController;
+use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ServicoController;
 use Illuminate\Http\Request;
@@ -28,4 +29,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/servicos', [ServicoController::class, 'store']);
     Route::put('/servicos/{servico}', [ServicoController::class, 'update']);
     Route::delete('/servicos/{servico}', [ServicoController::class, 'destroy']);
+
+    Route::post('/pedidos', [PedidoController::class, 'store']);
+    Route::get('/meus-pedidos', [PedidoController::class, 'meus']);
+    Route::get('/pedidos-recebidos', [PedidoController::class, 'recebidos']);
+    Route::put('/pedidos/{pedido}/aceitar', [PedidoController::class, 'aceitar']);
+    Route::put('/pedidos/{pedido}/recusar', [PedidoController::class, 'recusar']);
+    Route::put('/pedidos/{pedido}/concluir', [PedidoController::class, 'concluir']);
+    Route::put('/pedidos/{pedido}/cancelar', [PedidoController::class, 'cancelar']);
 });
