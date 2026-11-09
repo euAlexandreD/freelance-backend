@@ -2,73 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\CategoriaServico;
-use App\Models\Pedido;
-use App\Models\PerfilPrestador;
-use App\Models\Servico;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\CriaDadosDeTeste;
 use Tests\TestCase;
 
 class ServicoAvaliacaoTest extends TestCase
 {
+    use CriaDadosDeTeste;
     use RefreshDatabase;
-
-    private CategoriaServico $categoria;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->categoria = CategoriaServico::query()->create(['nome' => 'Design', 'slug' => 'design']);
-    }
-
-    private function prestador(string $nome = 'Ana Souza'): PerfilPrestador
-    {
-        $user = User::factory()->create(['name' => $nome, 'telefone' => '11999999999']);
-
-        return $user->perfilPrestador()->create(['titulo' => 'Designer']);
-    }
-
-    private function cliente(string $nome = 'Fernanda Costa'): User
-    {
-        $user = User::factory()->create(['name' => $nome]);
-        $user->perfilCliente()->create();
-
-        return $user;
-    }
-
-    private function servico(PerfilPrestador $perfil, array $dados = []): Servico
-    {
-        return $perfil->servicos()->create([
-            'categoria_servico_id' => $this->categoria->id,
-            'titulo' => 'Logotipo profissional',
-            'descricao' => 'Criação de logotipo.',
-            'tipo_preco' => 'fixo',
-            'preco' => 500,
-            ...$dados,
-        ]);
-    }
-
-    /** PNG real de 1x1 pixel: não depende da extensão GD para gerar imagens falsas. */
-    private function imagem(string $nome): UploadedFile
-    {
-        return UploadedFile::fake()->createWithContent(
-            $nome,
-            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
-        );
-    }
-
-    private function pedido(User $cliente, Servico $servico, string $status = 'concluido'): Pedido
-    {
-        return $cliente->perfilCliente->pedidos()->create([
-            'servico_id' => $servico->id,
-            'status' => $status,
-        ]);
-    }
 
     public function test_prestador_cadastra_servico_com_titulo_e_preco(): void
     {
@@ -76,7 +19,7 @@ class ServicoAvaliacaoTest extends TestCase
         Sanctum::actingAs($perfil->user);
 
         $this->postJson('/api/servicos', [
-            'categoria_servico_id' => $this->categoria->id,
+            'categoria_servico_id' => $this->categoria()->id,
             'titulo' => 'Logotipo profissional',
             'descricao' => 'Criação de logotipo.',
             'tipo_preco' => 'a_partir_de',
@@ -94,7 +37,7 @@ class ServicoAvaliacaoTest extends TestCase
         Sanctum::actingAs($perfil->user);
 
         $base = [
-            'categoria_servico_id' => $this->categoria->id,
+            'categoria_servico_id' => $this->categoria()->id,
             'titulo' => 'Logotipo profissional',
             'descricao' => 'Criação de logotipo.',
         ];
@@ -114,7 +57,7 @@ class ServicoAvaliacaoTest extends TestCase
         Sanctum::actingAs($perfil->user);
 
         $this->postJson('/api/servicos', [
-            'categoria_servico_id' => $this->categoria->id,
+            'categoria_servico_id' => $this->categoria()->id,
             'descricao' => 'Criação de logotipo.',
             'tipo_preco' => 'a_combinar',
         ])->assertJsonValidationErrors('titulo');

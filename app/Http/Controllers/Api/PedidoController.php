@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Pedido;
 use App\Models\Servico;
+use App\Notifications\PedidoAtualizado;
+use App\Notifications\PedidoRecebido;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -39,6 +41,8 @@ class PedidoController extends Controller
             'descricao_pedido' => $data['descricao_pedido'] ?? null,
         ]);
 
+        $pedido->prestadorUser()->notify(new PedidoRecebido($pedido));
+
         return $pedido->load(['servico.categoriaServico', 'servico.perfilPrestador.user']);
     }
 
@@ -53,6 +57,7 @@ class PedidoController extends Controller
         }
 
         return $perfilCliente->pedidos()
+            ->comNaoLidas($request->user())
             ->with(['servico.categoriaServico', 'servico.perfilPrestador.user', 'servico.fotos', 'avaliacao'])
             ->latest()
             ->get();
@@ -71,6 +76,7 @@ class PedidoController extends Controller
         return Pedido::whereHas('servico', function ($query) use ($perfilPrestador) {
             $query->where('perfil_prestador_id', $perfilPrestador->id);
         })
+            ->comNaoLidas($request->user())
             ->with(['servico.categoriaServico', 'servico.fotos', 'perfilCliente.user', 'avaliacao'])
             ->latest()
             ->get();
@@ -83,6 +89,7 @@ class PedidoController extends Controller
         abort_unless($pedido->status === 'pendente', 422, 'Este pedido já foi respondido.');
 
         $pedido->update(['status' => 'aceito']);
+        $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
     }
@@ -94,6 +101,7 @@ class PedidoController extends Controller
         abort_unless($pedido->status === 'pendente', 422, 'Este pedido já foi respondido.');
 
         $pedido->update(['status' => 'recusado']);
+        $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
     }
@@ -105,6 +113,7 @@ class PedidoController extends Controller
         abort_unless($pedido->status === 'aceito', 422, 'Só é possível concluir pedidos aceitos.');
 
         $pedido->update(['status' => 'concluido']);
+        $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
     }
@@ -120,6 +129,7 @@ class PedidoController extends Controller
         abort_unless(in_array($pedido->status, ['pendente', 'aceito'], true), 422, 'Este pedido não pode mais ser cancelado.');
 
         $pedido->update(['status' => 'cancelado']);
+        $pedido->prestadorUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'servico.perfilPrestador.user']);
     }

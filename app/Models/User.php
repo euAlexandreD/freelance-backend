@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -16,7 +17,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password', 'avatar_path', 'cidade', 'uf', 'telefone'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -41,6 +42,12 @@ class User extends Authenticatable
         return Attribute::make(
             get: fn () => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
         );
+    }
+
+    /** E-mails e notificações sempre em português. */
+    public function preferredLocale(): string
+    {
+        return 'pt_BR';
     }
 
     public function perfilPrestador(): HasOne

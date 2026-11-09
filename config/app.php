@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Endereço do frontend (React). Usado nos links dos e-mails enviados
+    | aos usuários, que abrem as telas do site e não da API.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5199'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

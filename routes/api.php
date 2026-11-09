@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AvaliacaoController;
 use App\Http\Controllers\Api\CategoriaServicoController;
+use App\Http\Controllers\Api\MensagemController;
 use App\Http\Controllers\Api\PedidoController;
 use App\Http\Controllers\Api\PrestadorController;
 use App\Http\Controllers\Api\ProfileController;
@@ -44,4 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/pedidos/{pedido}/concluir', [PedidoController::class, 'concluir']);
     Route::put('/pedidos/{pedido}/cancelar', [PedidoController::class, 'cancelar']);
     Route::post('/pedidos/{pedido}/avaliacao', [AvaliacaoController::class, 'store']);
+    Route::get('/pedidos/{pedido}/mensagens', [MensagemController::class, 'index']);
+    Route::post('/pedidos/{pedido}/mensagens', [MensagemController::class, 'store'])->middleware('throttle:30,1');
 });
