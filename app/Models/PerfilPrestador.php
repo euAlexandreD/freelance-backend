@@ -21,4 +21,9 @@ class PerfilPrestador extends Model
     {
         return $this->hasMany(Servico::class);
     }
+
+    public function avaliacoes(): HasMany
+    {
+        return $this->hasMany(Avaliacao::class);
+    }
 }

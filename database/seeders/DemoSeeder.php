@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Avaliacao;
 use App\Models\CategoriaServico;
 use App\Models\Pedido;
 use App\Models\PerfilCliente;
@@ -10,6 +11,7 @@ use App\Models\Servico;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -23,43 +25,43 @@ class DemoSeeder extends Seeder
             'name' => 'Ana Souza', 'email' => 'ana@example.com', 'cidade' => 'São Paulo', 'uf' => 'SP',
             'titulo' => 'Desenvolvedora Full Stack', 'bio' => 'Crio sites e sistemas web com React e Laravel há 6 anos.',
             'servicos' => [
-                ['desenvolvimento-web', 'Criação de site institucional responsivo, com painel administrativo.'],
-                ['desenvolvimento-web', 'Manutenção e correção de bugs em aplicações Laravel.'],
-                ['consultoria', 'Consultoria em arquitetura de software e boas práticas.'],
+                ['desenvolvimento-web', 'Site institucional responsivo', 'Criação de site institucional responsivo, com painel administrativo.', 'a_partir_de', 1800],
+                ['desenvolvimento-web', 'Manutenção de sistemas Laravel', 'Manutenção e correção de bugs em aplicações Laravel.', 'por_hora', 120],
+                ['consultoria', 'Consultoria em arquitetura de software', 'Consultoria em arquitetura de software e boas práticas.', 'por_hora', 180],
             ],
         ],
         [
             'name' => 'Bruno Lima', 'email' => 'bruno@example.com', 'cidade' => 'Porto Alegre', 'uf' => 'RS',
             'titulo' => 'Designer Gráfico', 'bio' => 'Identidade visual, logotipos e materiais para redes sociais.',
             'servicos' => [
-                ['design-grafico', 'Criação de logotipo e manual de identidade visual.'],
-                ['design-grafico', 'Pacote de 10 artes para Instagram.'],
-                ['marketing-digital', 'Planejamento de conteúdo mensal para redes sociais.'],
+                ['design-grafico', 'Logotipo e identidade visual', 'Criação de logotipo e manual de identidade visual.', 'fixo', 900],
+                ['design-grafico', 'Pacote com 10 artes para Instagram', 'Pacote de 10 artes para Instagram.', 'fixo', 350],
+                ['marketing-digital', 'Planejamento mensal de conteúdo', 'Planejamento de conteúdo mensal para redes sociais.', 'a_combinar', null],
             ],
         ],
         [
             'name' => 'Carla Mendes', 'email' => 'carla@example.com', 'cidade' => 'Curitiba', 'uf' => 'PR',
             'titulo' => 'Tradutora e Revisora', 'bio' => 'Tradução inglês/espanhol ↔ português e revisão de textos acadêmicos.',
             'servicos' => [
-                ['redacao-e-traducao', 'Tradução de documentos inglês ↔ português (por lauda).'],
-                ['redacao-e-traducao', 'Revisão ortográfica e ABNT de TCCs e artigos.'],
-                ['aulas-particulares', 'Aulas de inglês online para iniciantes.'],
+                ['redacao-e-traducao', 'Tradução inglês ↔ português', 'Tradução de documentos inglês ↔ português (por lauda).', 'a_partir_de', 45],
+                ['redacao-e-traducao', 'Revisão de TCC e normas ABNT', 'Revisão ortográfica e ABNT de TCCs e artigos.', 'a_partir_de', 250],
+                ['aulas-particulares', 'Aulas de inglês online', 'Aulas de inglês online para iniciantes.', 'por_hora', 70],
             ],
         ],
         [
             'name' => 'Diego Rocha', 'email' => 'diego@example.com', 'cidade' => 'Belo Horizonte', 'uf' => 'MG',
             'titulo' => 'Fotógrafo', 'bio' => 'Fotografia de eventos, produtos e ensaios.',
             'servicos' => [
-                ['fotografia-e-video', 'Cobertura fotográfica de eventos (até 4 horas).'],
-                ['fotografia-e-video', 'Fotos de produtos para e-commerce com fundo branco.'],
+                ['fotografia-e-video', 'Fotografia de eventos', 'Cobertura fotográfica de eventos (até 4 horas).', 'fixo', 1200],
+                ['fotografia-e-video', 'Fotos de produtos para e-commerce', 'Fotos de produtos para e-commerce com fundo branco.', 'a_partir_de', 25],
             ],
         ],
         [
             'name' => 'Eduardo Alves', 'email' => 'eduardo@example.com', 'cidade' => 'Florianópolis', 'uf' => 'SC',
             'titulo' => 'Eletricista e Reparos', 'bio' => 'Instalações elétricas, pequenos reparos e montagem de móveis.',
             'servicos' => [
-                ['reformas-e-manutencao', 'Instalação de tomadas, chuveiros e luminárias.'],
-                ['reformas-e-manutencao', 'Montagem de móveis planejados e de loja.'],
+                ['reformas-e-manutencao', 'Instalações elétricas residenciais', 'Instalação de tomadas, chuveiros e luminárias.', 'a_partir_de', 80],
+                ['reformas-e-manutencao', 'Montagem de móveis', 'Montagem de móveis planejados e de loja.', 'a_combinar', null],
             ],
         ],
     ];
@@ -90,10 +92,16 @@ class DemoSeeder extends Seeder
                     ['titulo' => $dados['titulo'], 'bio' => $dados['bio']],
                 );
 
-                foreach ($dados['servicos'] as [$slug, $descricao]) {
+                foreach ($dados['servicos'] as [$slug, $titulo, $descricao, $tipoPreco, $preco]) {
                     Servico::query()->updateOrCreate(
                         ['perfil_prestador_id' => $perfil->id, 'descricao' => $descricao],
-                        ['categoria_servico_id' => $categorias[$slug], 'ativo' => true],
+                        [
+                            'categoria_servico_id' => $categorias[$slug],
+                            'titulo' => $titulo,
+                            'tipo_preco' => $tipoPreco,
+                            'preco' => $preco,
+                            'ativo' => true,
+                        ],
                     );
                 }
             }
@@ -112,35 +120,81 @@ class DemoSeeder extends Seeder
                     ['user_id' => $teste->id],
                     ['titulo' => 'Desenvolvedor', 'bio' => 'Usuário de testes.'],
                 );
-                Servico::query()->firstOrCreate(
+                Servico::query()->updateOrCreate(
                     ['perfil_prestador_id' => $perfilTeste->id, 'descricao' => 'Desenvolvimento de landing pages.'],
-                    ['categoria_servico_id' => $categorias['desenvolvimento-web'], 'ativo' => true],
+                    [
+                        'categoria_servico_id' => $categorias['desenvolvimento-web'],
+                        'titulo' => 'Landing page de alta conversão',
+                        'tipo_preco' => 'fixo',
+                        'preco' => 1500,
+                        'ativo' => true,
+                    ],
                 );
             }
 
-            if (Pedido::query()->exists()) {
-                return;
+            if (! Pedido::query()->exists()) {
+                $this->pedidos($clientes);
             }
 
-            $status = ['pendente', 'pendente', 'aceito', 'recusado', 'concluido', 'cancelado'];
-            $servicos = Servico::query()->get();
-
-            foreach ($clientes as $i => $cliente) {
-                $donoDoPerfil = $cliente->user_id;
-                $disponiveis = $servicos->reject(
-                    fn (Servico $s) => $s->perfilPrestador->user_id === $donoDoPerfil,
-                )->shuffle()->take(4);
-
-                foreach ($disponiveis->values() as $j => $servico) {
-                    Pedido::query()->create([
-                        'perfil_cliente_id' => $cliente->id,
-                        'servico_id' => $servico->id,
-                        'status' => $status[($i + $j) % count($status)],
-                        'descricao_pedido' => self::PEDIDOS[($i + $j) % count(self::PEDIDOS)],
-                    ]);
-                }
-            }
+            $this->avaliacoes();
         });
+    }
+
+    /** @param  Collection<int, PerfilCliente>  $clientes */
+    private function pedidos($clientes): void
+    {
+
+        $status = ['pendente', 'pendente', 'aceito', 'recusado', 'concluido', 'cancelado'];
+        $servicos = Servico::query()->get();
+
+        foreach ($clientes as $i => $cliente) {
+            $donoDoPerfil = $cliente->user_id;
+            $disponiveis = $servicos->reject(
+                fn (Servico $s) => $s->perfilPrestador->user_id === $donoDoPerfil,
+            )->shuffle()->take(4);
+
+            foreach ($disponiveis->values() as $j => $servico) {
+                Pedido::query()->create([
+                    'perfil_cliente_id' => $cliente->id,
+                    'servico_id' => $servico->id,
+                    'status' => $status[($i + $j) % count($status)],
+                    'descricao_pedido' => self::PEDIDOS[($i + $j) % count(self::PEDIDOS)],
+                ]);
+            }
+        }
+    }
+
+    /** Pedidos concluídos ganham uma avaliação do cliente (alguns ficam sem, para testar a tela). */
+    private function avaliacoes(): void
+    {
+        $comentarios = [
+            5 => 'Excelente! Entregou antes do prazo e com muita qualidade.',
+            4 => 'Muito bom trabalho, comunicação clara.',
+            3 => 'Atendeu o combinado, mas demorou um pouco para responder.',
+        ];
+
+        Pedido::query()
+            ->where('status', 'concluido')
+            ->whereDoesntHave('avaliacao')
+            ->with('servico')
+            ->orderBy('id')
+            ->get()
+            ->each(function (Pedido $pedido) use ($comentarios) {
+                // Decide pelo id (e não pela posição) para rodar o seeder de novo dar o mesmo resultado.
+                if ($pedido->id % 3 === 0) {
+                    return;
+                }
+
+                $nota = [5, 4, 5, 3][$pedido->id % 4];
+
+                Avaliacao::query()->create([
+                    'pedido_id' => $pedido->id,
+                    'servico_id' => $pedido->servico_id,
+                    'perfil_prestador_id' => $pedido->servico->perfil_prestador_id,
+                    'nota' => $nota,
+                    'comentario' => $comentarios[$nota],
+                ]);
+            });
     }
 
     private function usuario(array $dados): User

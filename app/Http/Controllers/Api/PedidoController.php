@@ -53,7 +53,7 @@ class PedidoController extends Controller
         }
 
         return $perfilCliente->pedidos()
-            ->with(['servico.categoriaServico', 'servico.perfilPrestador.user'])
+            ->with(['servico.categoriaServico', 'servico.perfilPrestador.user', 'servico.fotos', 'avaliacao'])
             ->latest()
             ->get();
     }
@@ -71,7 +71,7 @@ class PedidoController extends Controller
         return Pedido::whereHas('servico', function ($query) use ($perfilPrestador) {
             $query->where('perfil_prestador_id', $perfilPrestador->id);
         })
-            ->with(['servico.categoriaServico', 'perfilCliente.user'])
+            ->with(['servico.categoriaServico', 'servico.fotos', 'perfilCliente.user', 'avaliacao'])
             ->latest()
             ->get();
     }
