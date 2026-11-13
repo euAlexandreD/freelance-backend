@@ -24,7 +24,7 @@ class PedidoController extends Controller
 
         $data = $request->validate([
             'servico_id' => ['required', Rule::exists('servicos', 'id')->where('ativo', true)],
-            'descricao_pedido' => ['nullable', 'string'],
+            'descricao_pedido' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $servico = Servico::findOrFail($data['servico_id']);
@@ -86,9 +86,7 @@ class PedidoController extends Controller
     {
         $this->authorizePrestador($request, $pedido);
 
-        abort_unless($pedido->status === 'pendente', 422, 'Este pedido já foi respondido.');
-
-        $pedido->update(['status' => 'aceito']);
+        $this->mudarStatus($pedido, ['pendente'], 'aceito', 'Este pedido já foi respondido.');
         $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
@@ -98,9 +96,7 @@ class PedidoController extends Controller
     {
         $this->authorizePrestador($request, $pedido);
 
-        abort_unless($pedido->status === 'pendente', 422, 'Este pedido já foi respondido.');
-
-        $pedido->update(['status' => 'recusado']);
+        $this->mudarStatus($pedido, ['pendente'], 'recusado', 'Este pedido já foi respondido.');
         $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
@@ -110,9 +106,7 @@ class PedidoController extends Controller
     {
         $this->authorizePrestador($request, $pedido);
 
-        abort_unless($pedido->status === 'aceito', 422, 'Só é possível concluir pedidos aceitos.');
-
-        $pedido->update(['status' => 'concluido']);
+        $this->mudarStatus($pedido, ['aceito'], 'concluido', 'Só é possível concluir pedidos aceitos.');
         $pedido->clienteUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'perfilCliente.user']);
@@ -126,12 +120,25 @@ class PedidoController extends Controller
             abort(403, 'Você não tem permissão para cancelar este pedido.');
         }
 
-        abort_unless(in_array($pedido->status, ['pendente', 'aceito'], true), 422, 'Este pedido não pode mais ser cancelado.');
-
-        $pedido->update(['status' => 'cancelado']);
+        $this->mudarStatus($pedido, ['pendente', 'aceito'], 'cancelado', 'Este pedido não pode mais ser cancelado.');
         $pedido->prestadorUser()->notify(new PedidoAtualizado($pedido));
 
         return $pedido->load(['servico.categoriaServico', 'servico.perfilPrestador.user']);
+    }
+
+    /**
+     * Troca o status só se o pedido ainda estiver num dos status esperados, numa única consulta.
+     * Assim dois cliques (ou cliente e prestador ao mesmo tempo) não aplicam duas mudanças nem mandam dois e-mails.
+     */
+    private function mudarStatus(Pedido $pedido, array $de, string $para, string $erro): void
+    {
+        $alterados = Pedido::whereKey($pedido->id)
+            ->whereIn('status', $de)
+            ->update(['status' => $para, 'updated_at' => now()]);
+
+        abort_if($alterados === 0, 422, $erro);
+
+        $pedido->refresh();
     }
 
     private function authorizePrestador(Request $request, Pedido $pedido): void

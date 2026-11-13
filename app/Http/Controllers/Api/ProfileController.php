@@ -22,20 +22,21 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'tipo' => ['required', Rule::in(['cliente', 'prestador'])],
-            'bio' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:2000'],
             'titulo' => ['nullable', 'string', 'max:255'],
-            'link_externo' => ['nullable', 'url', 'max:255'],
+            // Só http(s): o link vira um <a href> no perfil público, e `data:` ou outros esquemas não são seguros.
+            'link_externo' => ['nullable', 'url:http,https', 'max:255'],
             'cidade' => ['nullable', 'string', 'max:255'],
-            'uf' => ['nullable', 'string', 'size:2'],
+            'uf' => ['nullable', 'string', 'size:2', 'alpha:ascii'],
             'telefone' => ['nullable', 'string', 'max:20'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $userData = [
             'name' => $data['name'],
             'email' => $data['email'],
             'cidade' => $data['cidade'] ?? null,
-            'uf' => $data['uf'] ?? null,
+            'uf' => isset($data['uf']) ? strtoupper($data['uf']) : null,
             'telefone' => $data['telefone'] ?? null,
         ];
 

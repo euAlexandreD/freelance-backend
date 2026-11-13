@@ -40,13 +40,14 @@ class NovaMensagem extends Notification implements ShouldQueue
     {
         $pedido = $this->mensagem->pedido;
         $autor = $this->mensagem->autor->name;
+        $autorMd = Markdown::texto($autor);
         $papel = $pedido->clienteUser()->id === $notifiable->id ? 'cliente' : 'prestador';
 
         return (new MailMessage)
             ->subject("Nova mensagem de {$autor}")
-            ->greeting("Olá, {$notifiable->name}!")
-            ->line("**{$autor}** enviou uma mensagem sobre **{$pedido->servico->titulo}**:")
-            ->line('> '.Str::limit($this->mensagem->texto, 300))
+            ->greeting('Olá, '.Markdown::texto($notifiable->name).'!')
+            ->line("**{$autorMd}** enviou uma mensagem sobre **".Markdown::texto($pedido->servico->titulo).'**:')
+            ->line('> '.Markdown::texto(Str::limit($this->mensagem->texto, 300)))
             ->action('Responder', Links::pedido($pedido, $papel));
     }
 }

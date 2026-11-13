@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Mensagem;
 use App\Models\Pedido;
+use App\Models\User;
 use App\Notifications\NovaMensagem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -32,6 +33,10 @@ class MensagemController extends Controller
             ->where('user_id', '!=', $user->id)
             ->whereNull('lida_em')
             ->update(['lida_em' => now()]);
+
+        // Quem leu a conversa volta a poder receber o aviso por e-mail da próxima mensagem.
+        // Sem isso, uma mensagem nova até 15 min depois de outra já lida nunca gerava e-mail.
+        Cache::forget(self::chaveAviso($pedido, $user));
 
         $mensagens = $pedido->mensagens()
             ->with('autor:id,name')
@@ -68,14 +73,18 @@ class MensagemController extends Controller
         ]);
 
         $destinatario = $pedido->outraParte($user);
-        $chave = "aviso-mensagem:{$pedido->id}:{$destinatario->id}";
 
         // Cache::add só grava se a chave não existir: no máximo um e-mail por intervalo.
-        if (Cache::add($chave, true, now()->addMinutes(self::INTERVALO_AVISO_MINUTOS))) {
+        if (Cache::add(self::chaveAviso($pedido, $destinatario), true, now()->addMinutes(self::INTERVALO_AVISO_MINUTOS))) {
             $destinatario->notify(new NovaMensagem($mensagem));
         }
 
         return response()->json($this->formatar($mensagem->load('autor:id,name'), $user->id), 201);
+    }
+
+    private static function chaveAviso(Pedido $pedido, User $destinatario): string
+    {
+        return "aviso-mensagem:{$pedido->id}:{$destinatario->id}";
     }
 
     private function formatar(Mensagem $mensagem, int $userId): array

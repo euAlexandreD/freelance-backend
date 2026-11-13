@@ -30,11 +30,11 @@ class PedidoRecebido extends Notification implements ShouldQueue
 
         $mail = (new MailMessage)
             ->subject("Novo pedido: {$servico->titulo}")
-            ->greeting("Olá, {$notifiable->name}!")
-            ->line("**{$cliente->name}** solicitou o seu serviço **{$servico->titulo}**.");
+            ->greeting('Olá, '.Markdown::texto($notifiable->name).'!')
+            ->line('**'.Markdown::texto($cliente->name).'** solicitou o seu serviço **'.Markdown::texto($servico->titulo).'**.');
 
         if ($this->pedido->descricao_pedido) {
-            $mail->line('Mensagem do cliente:')->line("> {$this->pedido->descricao_pedido}");
+            $mail->line('Mensagem do cliente:')->line('> '.Markdown::texto($this->pedido->descricao_pedido));
         }
 
         return $mail

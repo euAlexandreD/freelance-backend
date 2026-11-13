@@ -104,7 +104,8 @@ class ServicoController extends Controller
             'descricao' => [$presence, 'string', 'max:5000'],
             'tipo_preco' => [$presence, Rule::in(Servico::TIPOS_PRECO)],
             'preco' => [
-                Rule::requiredIf($tipoPreco !== 'a_combinar' && ($required || $request->has('tipo_preco'))),
+                // Na edição, também exige o preço quando ele vem vazio, para um serviço "fixo" não ficar sem valor.
+                Rule::requiredIf($tipoPreco !== 'a_combinar' && ($required || $request->has('tipo_preco') || $request->exists('preco'))),
                 'nullable', 'numeric', 'min:1', 'max:9999999',
             ],
             'ativo' => ['boolean'],

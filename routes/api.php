@@ -12,8 +12,9 @@ use App\Http\Controllers\Api\ServicoFotoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Limita tentativas por IP para dificultar força bruta de senha e criação de contas em massa.
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 Route::get('/categorias-servico', [CategoriaServicoController::class, 'index']);
 Route::get('/servicos', [ServicoController::class, 'index']);
@@ -28,16 +29,17 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:20,1');
 
     Route::get('/meus-servicos', [ServicoController::class, 'meus']);
     Route::post('/servicos', [ServicoController::class, 'store']);
     Route::put('/servicos/{servico}', [ServicoController::class, 'update']);
     Route::delete('/servicos/{servico}', [ServicoController::class, 'destroy']);
-    Route::post('/servicos/{servico}/fotos', [ServicoFotoController::class, 'store']);
+    Route::post('/servicos/{servico}/fotos', [ServicoFotoController::class, 'store'])->middleware('throttle:20,1');
     Route::delete('/servico-fotos/{servicoFoto}', [ServicoFotoController::class, 'destroy']);
 
-    Route::post('/pedidos', [PedidoController::class, 'store']);
+    // Cada pedido dispara um e-mail para o prestador: o limite evita usar a API para spam.
+    Route::post('/pedidos', [PedidoController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/meus-pedidos', [PedidoController::class, 'meus']);
     Route::get('/pedidos-recebidos', [PedidoController::class, 'recebidos']);
     Route::put('/pedidos/{pedido}/aceitar', [PedidoController::class, 'aceitar']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pedido;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 
 class AvaliacaoController extends Controller
@@ -24,11 +25,16 @@ class AvaliacaoController extends Controller
             'comentario' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $avaliacao = $pedido->avaliacao()->create([
-            ...$data,
-            'servico_id' => $pedido->servico_id,
-            'perfil_prestador_id' => $pedido->servico->perfil_prestador_id,
-        ]);
+        try {
+            $avaliacao = $pedido->avaliacao()->create([
+                ...$data,
+                'servico_id' => $pedido->servico_id,
+                'perfil_prestador_id' => $pedido->servico->perfil_prestador_id,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Dois envios ao mesmo tempo: o índice único de pedido_id barra o segundo.
+            abort(422, 'Este pedido já foi avaliado.');
+        }
 
         return response()->json($avaliacao, 201);
     }
